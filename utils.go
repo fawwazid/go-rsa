@@ -9,7 +9,10 @@ import (
 )
 
 // GenerateKeys generates a new RSA key pair of the given bit size.
+//
 // The bit size must be at least 2048 to comply with NIST standards.
+//
+// Returns the private key, public key, or an error if generation fails or the bit size is too small.
 func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	if bits < 2048 {
 		return nil, nil, errors.New("key size must be at least 2048 bits")
@@ -22,6 +25,10 @@ func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 }
 
 // PrivateKeyToPEM converts an RSA private key to PEM format.
+//
+// It marshals the private key to PKCS#1 ASN.1 DER syntax and encodes it to a PEM block.
+//
+// Returns the PEM-encoded private key as a byte slice.
 func PrivateKeyToPEM(priv *rsa.PrivateKey) []byte {
 	privBytes := x509.MarshalPKCS1PrivateKey(priv)
 	privPEM := pem.EncodeToMemory(
@@ -34,6 +41,10 @@ func PrivateKeyToPEM(priv *rsa.PrivateKey) []byte {
 }
 
 // PublicKeyToPEM converts an RSA public key to PEM format.
+//
+// It marshals the public key to PKIX ASN.1 DER syntax and encodes it to a PEM block.
+//
+// Returns the PEM-encoded public key as a byte slice, or an error if marshaling fails.
 func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
@@ -49,6 +60,10 @@ func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 }
 
 // ParsePrivateKeyFromPEM parses an RSA private key from PEM format.
+//
+// It decodes the PEM block and parses the PKCS#1 private key.
+//
+// Returns the parsed private key or an error if parsing fails.
 func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
@@ -64,6 +79,10 @@ func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 }
 
 // ParsePublicKeyFromPEM parses an RSA public key from PEM format.
+//
+// It decodes the PEM block and parses the PKIX public key.
+//
+// Returns the parsed public key or an error if parsing fails or the key is not an RSA key.
 func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
