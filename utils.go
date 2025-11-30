@@ -28,8 +28,11 @@ func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 //
 // It marshals the private key to PKCS#1 ASN.1 DER syntax and encodes it to a PEM block.
 //
-// Returns the PEM-encoded private key as a byte slice.
-func PrivateKeyToPEM(priv *rsa.PrivateKey) []byte {
+// Returns the PEM-encoded private key as a byte slice, or an error if the key is nil.
+func PrivateKeyToPEM(priv *rsa.PrivateKey) ([]byte, error) {
+	if priv == nil {
+		return nil, errors.New("private key cannot be nil")
+	}
 	privBytes := x509.MarshalPKCS1PrivateKey(priv)
 	privPEM := pem.EncodeToMemory(
 		&pem.Block{
@@ -37,15 +40,18 @@ func PrivateKeyToPEM(priv *rsa.PrivateKey) []byte {
 			Bytes: privBytes,
 		},
 	)
-	return privPEM
+	return privPEM, nil
 }
 
 // PublicKeyToPEM converts an RSA public key to PEM format.
 //
 // It marshals the public key to PKIX ASN.1 DER syntax and encodes it to a PEM block.
 //
-// Returns the PEM-encoded public key as a byte slice, or an error if marshaling fails.
+// Returns the PEM-encoded public key as a byte slice, or an error if the key is nil or marshaling fails.
 func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
+	if pub == nil {
+		return nil, errors.New("public key cannot be nil")
+	}
 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
 		return nil, err
