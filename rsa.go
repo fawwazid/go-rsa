@@ -10,6 +10,7 @@ import (
 // EncryptOAEP encrypts the given data with RSA-OAEP using SHA256.
 //
 // It takes the recipient's public key, the message to encrypt, and an optional label.
+// The label parameter can be nil or an empty slice ([]byte{}) if not needed.
 // The label is not encrypted but is bound to the message, ensuring that the
 // ciphertext cannot be decrypted with a different label.
 //
