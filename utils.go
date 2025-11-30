@@ -62,6 +62,7 @@ func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 // ParsePrivateKeyFromPEM parses an RSA private key from PEM format.
 //
 // It decodes the PEM block and parses the PKCS#1 private key.
+// Note: Only the first PEM block is parsed; any additional blocks or trailing data are ignored.
 //
 // Returns the parsed private key or an error if parsing fails.
 func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
@@ -81,6 +82,7 @@ func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 // ParsePublicKeyFromPEM parses an RSA public key from PEM format.
 //
 // It decodes the PEM block and parses the PKIX public key.
+// Note: Only the first PEM block is parsed; any additional blocks or trailing data are ignored.
 //
 // Returns the parsed public key or an error if parsing fails or the key is not an RSA key.
 func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {

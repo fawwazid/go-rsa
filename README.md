@@ -69,6 +69,8 @@ fmt.Printf("Decrypted: %s\n", plaintext)
 Supported for legacy compatibility.
 
 ```go
+msg := []byte("Secret Message")
+
 // Encrypt
 ciphertext, err := gorsa.EncryptPKCS1v15(pub, msg)
 if err != nil {
@@ -106,6 +108,8 @@ fmt.Println("Signature verified!")
 Supported for legacy compatibility.
 
 ```go
+msg := []byte("Secret Message")
+
 // Sign
 signature, err := gorsa.SignPKCS1v15(priv, msg)
 if err != nil {
