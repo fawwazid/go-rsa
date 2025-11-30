@@ -52,7 +52,7 @@ func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 	}
 	pubPEM := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
+			Type:  "PUBLIC KEY",
 			Bytes: pubBytes,
 		},
 	)

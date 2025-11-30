@@ -1,6 +1,11 @@
 package tests
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 	"testing"
 
 	gorsa "github.com/fawwazid/go-rsa"
@@ -97,5 +102,174 @@ func TestGenerateKeysValidation(t *testing.T) {
 	_, _, err = gorsa.GenerateKeys(2048)
 	if err != nil {
 		t.Errorf("Expected no error for key size 2048, got %v", err)
+	}
+}
+
+func TestParsePrivateKeyFromPEMErrors(t *testing.T) {
+	// Test with invalid PEM data
+	invalidPEM := []byte("this is not valid PEM data")
+	_, err := gorsa.ParsePrivateKeyFromPEM(invalidPEM)
+	if err == nil {
+		t.Error("Expected error for invalid PEM data, got nil")
+	}
+
+	// Test with empty PEM data
+	_, err = gorsa.ParsePrivateKeyFromPEM([]byte{})
+	if err == nil {
+		t.Error("Expected error for empty PEM data, got nil")
+	}
+}
+
+func TestParsePublicKeyFromPEMErrors(t *testing.T) {
+	// Test with invalid PEM data
+	invalidPEM := []byte("this is not valid PEM data")
+	_, err := gorsa.ParsePublicKeyFromPEM(invalidPEM)
+	if err == nil {
+		t.Error("Expected error for invalid PEM data, got nil")
+	}
+
+	// Test with empty PEM data
+	_, err = gorsa.ParsePublicKeyFromPEM([]byte{})
+	if err == nil {
+		t.Error("Expected error for empty PEM data, got nil")
+	}
+
+	// Test with non-RSA key (ECDSA)
+	ecdsaPriv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate ECDSA key: %v", err)
+	}
+	ecdsaPubBytes, err := x509.MarshalPKIXPublicKey(&ecdsaPriv.PublicKey)
+	if err != nil {
+		t.Fatalf("Failed to marshal ECDSA public key: %v", err)
+	}
+	ecdsaPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: ecdsaPubBytes,
+	})
+	_, err = gorsa.ParsePublicKeyFromPEM(ecdsaPEM)
+	if err == nil {
+		t.Error("Expected error for non-RSA key, got nil")
+	}
+}
+
+func TestDecryptOAEPErrors(t *testing.T) {
+	priv, pub, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatalf("Failed to generate keys: %v", err)
+	}
+
+	msg := []byte("Hello, RSA!")
+	label := []byte("test-label")
+
+	ciphertext, err := gorsa.EncryptOAEP(pub, msg, label)
+	if err != nil {
+		t.Fatalf("Failed to encrypt OAEP: %v", err)
+	}
+
+	// Test decryption with mismatched label
+	wrongLabel := []byte("wrong-label")
+	_, err = gorsa.DecryptOAEP(priv, ciphertext, wrongLabel)
+	if err == nil {
+		t.Error("Expected error for mismatched label, got nil")
+	}
+
+	// Test decryption with corrupted ciphertext
+	corruptedCiphertext := make([]byte, len(ciphertext))
+	copy(corruptedCiphertext, ciphertext)
+	corruptedCiphertext[0] ^= 0xFF // Flip bits in first byte
+	_, err = gorsa.DecryptOAEP(priv, corruptedCiphertext, label)
+	if err == nil {
+		t.Error("Expected error for corrupted ciphertext, got nil")
+	}
+
+	// Test decryption with wrong key
+	priv2, _, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatalf("Failed to generate second key pair: %v", err)
+	}
+	_, err = gorsa.DecryptOAEP(priv2, ciphertext, label)
+	if err == nil {
+		t.Error("Expected error for wrong key, got nil")
+	}
+}
+
+func TestVerifyPSSErrors(t *testing.T) {
+	priv, pub, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatalf("Failed to generate keys: %v", err)
+	}
+
+	msg := []byte("Hello, RSA!")
+
+	signature, err := gorsa.SignPSS(priv, msg)
+	if err != nil {
+		t.Fatalf("Failed to sign PSS: %v", err)
+	}
+
+	// Test verification with corrupted signature
+	corruptedSignature := make([]byte, len(signature))
+	copy(corruptedSignature, signature)
+	corruptedSignature[0] ^= 0xFF // Flip bits in first byte
+	err = gorsa.VerifyPSS(pub, msg, corruptedSignature)
+	if err == nil {
+		t.Error("Expected error for corrupted signature, got nil")
+	}
+
+	// Test verification with modified message
+	modifiedMsg := []byte("Modified message!")
+	err = gorsa.VerifyPSS(pub, modifiedMsg, signature)
+	if err == nil {
+		t.Error("Expected error for modified message, got nil")
+	}
+
+	// Test verification with wrong key
+	_, pub2, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatalf("Failed to generate second key pair: %v", err)
+	}
+	err = gorsa.VerifyPSS(pub2, msg, signature)
+	if err == nil {
+		t.Error("Expected error for wrong key, got nil")
+	}
+}
+
+func TestVerifyPKCS1v15Errors(t *testing.T) {
+	priv, pub, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatalf("Failed to generate keys: %v", err)
+	}
+
+	msg := []byte("Hello, RSA!")
+
+	signature, err := gorsa.SignPKCS1v15(priv, msg)
+	if err != nil {
+		t.Fatalf("Failed to sign PKCS1v15: %v", err)
+	}
+
+	// Test verification with corrupted signature
+	corruptedSignature := make([]byte, len(signature))
+	copy(corruptedSignature, signature)
+	corruptedSignature[0] ^= 0xFF // Flip bits in first byte
+	err = gorsa.VerifyPKCS1v15(pub, msg, corruptedSignature)
+	if err == nil {
+		t.Error("Expected error for corrupted signature, got nil")
+	}
+
+	// Test verification with modified message
+	modifiedMsg := []byte("Modified message!")
+	err = gorsa.VerifyPKCS1v15(pub, modifiedMsg, signature)
+	if err == nil {
+		t.Error("Expected error for modified message, got nil")
+	}
+
+	// Test verification with wrong key
+	_, pub2, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatalf("Failed to generate second key pair: %v", err)
+	}
+	err = gorsa.VerifyPKCS1v15(pub2, msg, signature)
+	if err == nil {
+		t.Error("Expected error for wrong key, got nil")
 	}
 }
