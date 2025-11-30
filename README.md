@@ -127,7 +127,10 @@ if err != nil {
 
 ```go
 // Export to PEM
-privPEM := gorsa.PrivateKeyToPEM(priv)
+privPEM, err := gorsa.PrivateKeyToPEM(priv)
+if err != nil {
+    log.Fatal(err)
+}
 pubPEM, err := gorsa.PublicKeyToPEM(pub)
 if err != nil {
     log.Fatal(err)
