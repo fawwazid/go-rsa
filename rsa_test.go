@@ -1,4 +1,4 @@
-package tests
+package gorsa_test
 
 import (
 	"crypto/ecdsa"

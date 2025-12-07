@@ -1,17 +1,28 @@
 # Go RSA Library
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/fawwazid/go-rsa)](https://goreportcard.com/report/github.com/fawwazid/go-rsa)
+[![Go Reference](https://pkg.go.dev/badge/github.com/fawwazid/go-rsa.svg)](https://pkg.go.dev/github.com/fawwazid/go-rsa)
+
 A simple and secure Go library for RSA encryption, decryption, signing, and verification. This library supports OAEP, PSS, and PKCS#1 v1.5 schemes and enforces NIST standards for key sizes.
 
 ## Features
 
 - **Key Generation**: Generates RSA key pairs with a minimum size of 2048 bits (NIST standard).
 - **Encryption/Decryption**:
-  - RSA-OAEP (with SHA-256)
-  - RSA-PKCS#1 v1.5
+  - RSA-OAEP (with SHA-256) - **Recommended**
+  - RSA-PKCS#1 v1.5 - **Deprecated** (NIST recommends OAEP)
 - **Signing/Verification**:
-  - RSA-PSS (with SHA-256)
+  - RSA-PSS (with SHA-256) - **Recommended**
   - RSA-PKCS#1 v1.5 (with SHA-256)
 - **Key Management**: Import and export keys in PEM format.
+
+## NIST Compliance
+
+This library enforces NIST recommendations:
+
+- **Minimum Key Size**: 2048 bits. Key generation will fail for smaller sizes.
+- **Hash Function**: SHA-256 is used for OAEP and PSS.
+- **Encryption**: RSA-OAEP is the recommended scheme. PKCS#1 v1.5 is marked as deprecated.
 
 ## Installation
 
@@ -66,7 +77,9 @@ fmt.Printf("Decrypted: %s\n", plaintext)
 
 ### 3. Encryption and Decryption (PKCS#1 v1.5)
 
-Supported for legacy compatibility.
+### 3. Encryption and Decryption (PKCS#1 v1.5) [Deprecated]
+
+Supported for legacy compatibility only. NIST recommends using OAEP.
 
 ```go
 msg := []byte("Secret Message")
