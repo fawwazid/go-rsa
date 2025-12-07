@@ -41,6 +41,8 @@ func DecryptOAEP(priv *rsa.PrivateKey, ciphertext []byte, label []byte) ([]byte,
 // Note: This scheme is less secure than OAEP and is included for legacy compatibility.
 // New applications should prefer EncryptOAEP.
 //
+// Deprecated: NIST recommends using RSA-OAEP instead of RSA-PKCS#1 v1.5 for encryption.
+//
 // Returns the encrypted ciphertext or an error if encryption fails.
 func EncryptPKCS1v15(pub *rsa.PublicKey, msg []byte) ([]byte, error) {
 	if pub == nil {
@@ -53,6 +55,8 @@ func EncryptPKCS1v15(pub *rsa.PublicKey, msg []byte) ([]byte, error) {
 //
 // Note: This scheme is susceptible to padding oracle attacks.
 // New applications should prefer DecryptOAEP.
+//
+// Deprecated: NIST recommends using RSA-OAEP instead of RSA-PKCS#1 v1.5 for encryption.
 //
 // Returns the decrypted plaintext or an error if decryption fails.
 func DecryptPKCS1v15(priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
