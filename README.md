@@ -75,8 +75,6 @@ if err != nil {
 fmt.Printf("Decrypted: %s\n", plaintext)
 ```
 
-### 3. Encryption and Decryption (PKCS#1 v1.5)
-
 ### 3. Encryption and Decryption (PKCS#1 v1.5) [Deprecated]
 
 Supported for legacy compatibility only. NIST recommends using OAEP.
