@@ -1,7 +1,7 @@
 # Go RSA Library
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/fawwazid/go-rsa)](https://goreportcard.com/report/github.com/fawwazid/go-rsa)
 [![Go Reference](https://pkg.go.dev/badge/github.com/fawwazid/go-rsa.svg)](https://pkg.go.dev/github.com/fawwazid/go-rsa)
+[![Go Report Card](https://goreportcard.com/badge/github.com/fawwazid/go-rsa)](https://goreportcard.com/report/github.com/fawwazid/go-rsa)
 
 A simple and secure Go library for RSA encryption, decryption, signing, and verification. This library supports OAEP, PSS, and PKCS#1 v1.5 schemes and enforces NIST standards for key sizes.
 
