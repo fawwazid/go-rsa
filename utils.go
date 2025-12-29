@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 )
 
 // GenerateKeys generates a new RSA key pair of the given bit size.
@@ -15,7 +14,7 @@ import (
 // Returns the private key, public key, or an error if generation fails or the bit size is too small.
 func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	if bits < 2048 {
-		return nil, nil, errors.New("key size must be at least 2048 bits")
+		return nil, nil, ErrKeySizeTooSmall
 	}
 	priv, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
@@ -31,7 +30,7 @@ func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 // Returns the PEM-encoded private key as a byte slice, or an error if the key is nil.
 func PrivateKeyToPEM(priv *rsa.PrivateKey) ([]byte, error) {
 	if priv == nil {
-		return nil, errors.New("private key cannot be nil")
+		return nil, ErrNilPrivateKey
 	}
 	privBytes := x509.MarshalPKCS1PrivateKey(priv)
 	privPEM := pem.EncodeToMemory(
@@ -50,7 +49,7 @@ func PrivateKeyToPEM(priv *rsa.PrivateKey) ([]byte, error) {
 // Returns the PEM-encoded public key as a byte slice, or an error if the key is nil or marshaling fails.
 func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 	if pub == nil {
-		return nil, errors.New("public key cannot be nil")
+		return nil, ErrNilPublicKey
 	}
 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
@@ -74,7 +73,7 @@ func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
+		return nil, ErrInvalidPEM
 	}
 
 	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
@@ -94,7 +93,7 @@ func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
+		return nil, ErrInvalidPEM
 	}
 
 	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -106,6 +105,6 @@ func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 	case *rsa.PublicKey:
 		return pub, nil
 	default:
-		return nil, errors.New("key type is not RSA")
+		return nil, ErrNotRSAKey
 	}
 }

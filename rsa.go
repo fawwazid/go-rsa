@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"errors"
 )
 
 // EncryptOAEP encrypts the given data with RSA-OAEP using SHA256.
@@ -15,10 +14,12 @@ import (
 // The label is not encrypted but is bound to the message, ensuring that the
 // ciphertext cannot be decrypted with a different label.
 //
+// Compliance: NIST SP 800-56B Rev. 2 recommends RSA-OAEP for encryption.
+//
 // Returns the encrypted ciphertext or an error if encryption fails.
 func EncryptOAEP(pub *rsa.PublicKey, msg []byte, label []byte) ([]byte, error) {
 	if pub == nil {
-		return nil, errors.New("public key cannot be nil")
+		return nil, ErrNilPublicKey
 	}
 	return rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, msg, label)
 }
@@ -28,10 +29,12 @@ func EncryptOAEP(pub *rsa.PublicKey, msg []byte, label []byte) ([]byte, error) {
 // It takes the recipient's private key, the ciphertext to decrypt, and the optional label
 // used during encryption. The label must match the one used for encryption.
 //
+// Compliance: NIST SP 800-56B Rev. 2 recommends RSA-OAEP for encryption.
+//
 // Returns the decrypted plaintext or an error if decryption fails.
 func DecryptOAEP(priv *rsa.PrivateKey, ciphertext []byte, label []byte) ([]byte, error) {
 	if priv == nil {
-		return nil, errors.New("private key cannot be nil")
+		return nil, ErrNilPrivateKey
 	}
 	return rsa.DecryptOAEP(sha256.New(), rand.Reader, priv, ciphertext, label)
 }
@@ -41,12 +44,12 @@ func DecryptOAEP(priv *rsa.PrivateKey, ciphertext []byte, label []byte) ([]byte,
 // Note: This scheme is less secure than OAEP and is included for legacy compatibility.
 // New applications should prefer EncryptOAEP.
 //
-// Deprecated: NIST recommends using RSA-OAEP instead of RSA-PKCS#1 v1.5 for encryption.
+// Deprecated: NIST SP 800-56B Rev. 2 deprecates RSAES-PKCS1-v1_5. Use RSA-OAEP instead.
 //
 // Returns the encrypted ciphertext or an error if encryption fails.
 func EncryptPKCS1v15(pub *rsa.PublicKey, msg []byte) ([]byte, error) {
 	if pub == nil {
-		return nil, errors.New("public key cannot be nil")
+		return nil, ErrNilPublicKey
 	}
 	return rsa.EncryptPKCS1v15(rand.Reader, pub, msg)
 }
@@ -56,12 +59,12 @@ func EncryptPKCS1v15(pub *rsa.PublicKey, msg []byte) ([]byte, error) {
 // Note: This scheme is susceptible to padding oracle attacks.
 // New applications should prefer DecryptOAEP.
 //
-// Deprecated: NIST recommends using RSA-OAEP instead of RSA-PKCS#1 v1.5 for encryption.
+// Deprecated: NIST SP 800-56B Rev. 2 deprecates RSAES-PKCS1-v1_5. Use RSA-OAEP instead.
 //
 // Returns the decrypted plaintext or an error if decryption fails.
 func DecryptPKCS1v15(priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
 	if priv == nil {
-		return nil, errors.New("private key cannot be nil")
+		return nil, ErrNilPrivateKey
 	}
 	return rsa.DecryptPKCS1v15(rand.Reader, priv, ciphertext)
 }
@@ -71,10 +74,12 @@ func DecryptPKCS1v15(priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
 // It calculates the SHA-256 hash of the message and signs it using the PSS scheme.
 // PSS is a probabilistic signature scheme and is recommended for new applications.
 //
+// Compliance: NIST SP 800-57 Part 1 Rev. 5 recommends RSA-PSS for digital signatures.
+//
 // Returns the signature or an error if signing fails.
 func SignPSS(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
 	if priv == nil {
-		return nil, errors.New("private key cannot be nil")
+		return nil, ErrNilPrivateKey
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.SignPSS(rand.Reader, priv, crypto.SHA256, hashed[:], nil)
@@ -85,10 +90,12 @@ func SignPSS(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
 // It calculates the SHA-256 hash of the message and verifies the signature against
 // the public key using the PSS scheme.
 //
+// Compliance: NIST SP 800-57 Part 1 Rev. 5 recommends RSA-PSS for digital signatures.
+//
 // Returns nil if the signature is valid, or an error otherwise.
 func VerifyPSS(pub *rsa.PublicKey, msg, signature []byte) error {
 	if pub == nil {
-		return errors.New("public key cannot be nil")
+		return ErrNilPublicKey
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.VerifyPSS(pub, crypto.SHA256, hashed[:], signature, nil)
@@ -98,10 +105,12 @@ func VerifyPSS(pub *rsa.PublicKey, msg, signature []byte) error {
 //
 // It calculates the SHA-256 hash of the message and signs it using the PKCS#1 v1.5 scheme.
 //
+// Compliance: Acceptable under NIST SP 800-131A Rev. 2, but RSA-PSS is preferred for new applications.
+//
 // Returns the signature or an error if signing fails.
 func SignPKCS1v15(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
 	if priv == nil {
-		return nil, errors.New("private key cannot be nil")
+		return nil, ErrNilPrivateKey
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA256, hashed[:])
@@ -112,10 +121,12 @@ func SignPKCS1v15(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
 // It calculates the SHA-256 hash of the message and verifies the signature against
 // the public key using the PKCS#1 v1.5 scheme.
 //
+// Compliance: Acceptable under NIST SP 800-131A Rev. 2, but RSA-PSS is preferred for new applications.
+//
 // Returns nil if the signature is valid, or an error otherwise.
 func VerifyPKCS1v15(pub *rsa.PublicKey, msg, signature []byte) error {
 	if pub == nil {
-		return errors.New("public key cannot be nil")
+		return ErrNilPublicKey
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], signature)

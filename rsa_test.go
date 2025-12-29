@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"testing"
 
 	gorsa "github.com/fawwazid/go-rsa"
@@ -97,8 +98,8 @@ func TestRSA(t *testing.T) {
 func TestGenerateKeysValidation(t *testing.T) {
 	// Test with invalid key size
 	_, _, err := gorsa.GenerateKeys(1024)
-	if err == nil {
-		t.Error("Expected error for key size < 2048, got nil")
+	if !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
+		t.Errorf("Expected ErrKeySizeTooSmall for key size < 2048, got %v", err)
 	}
 
 	// Test with valid key size
@@ -112,14 +113,14 @@ func TestParsePrivateKeyFromPEMErrors(t *testing.T) {
 	// Test with invalid PEM data
 	invalidPEM := []byte("this is not valid PEM data")
 	_, err := gorsa.ParsePrivateKeyFromPEM(invalidPEM)
-	if err == nil {
-		t.Error("Expected error for invalid PEM data, got nil")
+	if !errors.Is(err, gorsa.ErrInvalidPEM) {
+		t.Errorf("Expected ErrInvalidPEM for invalid PEM data, got %v", err)
 	}
 
 	// Test with empty PEM data
 	_, err = gorsa.ParsePrivateKeyFromPEM([]byte{})
-	if err == nil {
-		t.Error("Expected error for empty PEM data, got nil")
+	if !errors.Is(err, gorsa.ErrInvalidPEM) {
+		t.Errorf("Expected ErrInvalidPEM for empty PEM data, got %v", err)
 	}
 }
 
@@ -127,14 +128,14 @@ func TestParsePublicKeyFromPEMErrors(t *testing.T) {
 	// Test with invalid PEM data
 	invalidPEM := []byte("this is not valid PEM data")
 	_, err := gorsa.ParsePublicKeyFromPEM(invalidPEM)
-	if err == nil {
-		t.Error("Expected error for invalid PEM data, got nil")
+	if !errors.Is(err, gorsa.ErrInvalidPEM) {
+		t.Errorf("Expected ErrInvalidPEM for invalid PEM data, got %v", err)
 	}
 
 	// Test with empty PEM data
 	_, err = gorsa.ParsePublicKeyFromPEM([]byte{})
-	if err == nil {
-		t.Error("Expected error for empty PEM data, got nil")
+	if !errors.Is(err, gorsa.ErrInvalidPEM) {
+		t.Errorf("Expected ErrInvalidPEM for empty PEM data, got %v", err)
 	}
 
 	// Test with non-RSA key (ECDSA)
@@ -151,8 +152,8 @@ func TestParsePublicKeyFromPEMErrors(t *testing.T) {
 		Bytes: ecdsaPubBytes,
 	})
 	_, err = gorsa.ParsePublicKeyFromPEM(ecdsaPEM)
-	if err == nil {
-		t.Error("Expected error for non-RSA key, got nil")
+	if !errors.Is(err, gorsa.ErrNotRSAKey) {
+		t.Errorf("Expected ErrNotRSAKey for non-RSA key, got %v", err)
 	}
 }
 
@@ -321,65 +322,65 @@ func TestNilKeyValidation(t *testing.T) {
 
 	// Test EncryptOAEP with nil public key
 	_, err = gorsa.EncryptOAEP(nil, msg, label)
-	if err == nil {
-		t.Error("Expected error for nil public key in EncryptOAEP, got nil")
+	if !errors.Is(err, gorsa.ErrNilPublicKey) {
+		t.Errorf("Expected ErrNilPublicKey in EncryptOAEP, got %v", err)
 	}
 
 	// Test DecryptOAEP with nil private key
 	ciphertext, _ := gorsa.EncryptOAEP(pub, msg, label)
 	_, err = gorsa.DecryptOAEP(nil, ciphertext, label)
-	if err == nil {
-		t.Error("Expected error for nil private key in DecryptOAEP, got nil")
+	if !errors.Is(err, gorsa.ErrNilPrivateKey) {
+		t.Errorf("Expected ErrNilPrivateKey in DecryptOAEP, got %v", err)
 	}
 
 	// Test EncryptPKCS1v15 with nil public key
 	_, err = gorsa.EncryptPKCS1v15(nil, msg)
-	if err == nil {
-		t.Error("Expected error for nil public key in EncryptPKCS1v15, got nil")
+	if !errors.Is(err, gorsa.ErrNilPublicKey) {
+		t.Errorf("Expected ErrNilPublicKey in EncryptPKCS1v15, got %v", err)
 	}
 
 	// Test DecryptPKCS1v15 with nil private key
 	ciphertextPKCS, _ := gorsa.EncryptPKCS1v15(pub, msg)
 	_, err = gorsa.DecryptPKCS1v15(nil, ciphertextPKCS)
-	if err == nil {
-		t.Error("Expected error for nil private key in DecryptPKCS1v15, got nil")
+	if !errors.Is(err, gorsa.ErrNilPrivateKey) {
+		t.Errorf("Expected ErrNilPrivateKey in DecryptPKCS1v15, got %v", err)
 	}
 
 	// Test SignPSS with nil private key
 	_, err = gorsa.SignPSS(nil, msg)
-	if err == nil {
-		t.Error("Expected error for nil private key in SignPSS, got nil")
+	if !errors.Is(err, gorsa.ErrNilPrivateKey) {
+		t.Errorf("Expected ErrNilPrivateKey in SignPSS, got %v", err)
 	}
 
 	// Test VerifyPSS with nil public key
 	signaturePSS, _ := gorsa.SignPSS(priv, msg)
 	err = gorsa.VerifyPSS(nil, msg, signaturePSS)
-	if err == nil {
-		t.Error("Expected error for nil public key in VerifyPSS, got nil")
+	if !errors.Is(err, gorsa.ErrNilPublicKey) {
+		t.Errorf("Expected ErrNilPublicKey in VerifyPSS, got %v", err)
 	}
 
 	// Test SignPKCS1v15 with nil private key
 	_, err = gorsa.SignPKCS1v15(nil, msg)
-	if err == nil {
-		t.Error("Expected error for nil private key in SignPKCS1v15, got nil")
+	if !errors.Is(err, gorsa.ErrNilPrivateKey) {
+		t.Errorf("Expected ErrNilPrivateKey in SignPKCS1v15, got %v", err)
 	}
 
 	// Test VerifyPKCS1v15 with nil public key
 	signaturePKCS, _ := gorsa.SignPKCS1v15(priv, msg)
 	err = gorsa.VerifyPKCS1v15(nil, msg, signaturePKCS)
-	if err == nil {
-		t.Error("Expected error for nil public key in VerifyPKCS1v15, got nil")
+	if !errors.Is(err, gorsa.ErrNilPublicKey) {
+		t.Errorf("Expected ErrNilPublicKey in VerifyPKCS1v15, got %v", err)
 	}
 
 	// Test PrivateKeyToPEM with nil private key
 	_, err = gorsa.PrivateKeyToPEM(nil)
-	if err == nil {
-		t.Error("Expected error for nil private key in PrivateKeyToPEM, got nil")
+	if !errors.Is(err, gorsa.ErrNilPrivateKey) {
+		t.Errorf("Expected ErrNilPrivateKey in PrivateKeyToPEM, got %v", err)
 	}
 
 	// Test PublicKeyToPEM with nil public key
 	_, err = gorsa.PublicKeyToPEM(nil)
-	if err == nil {
-		t.Error("Expected error for nil public key in PublicKeyToPEM, got nil")
+	if !errors.Is(err, gorsa.ErrNilPublicKey) {
+		t.Errorf("Expected ErrNilPublicKey in PublicKeyToPEM, got %v", err)
 	}
 }
