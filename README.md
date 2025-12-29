@@ -9,20 +9,22 @@ A simple and secure Go library for RSA encryption, decryption, signing, and veri
 
 - **Key Generation**: Generates RSA key pairs with a minimum size of 2048 bits (NIST standard).
 - **Encryption/Decryption**:
-  - RSA-OAEP (with SHA-256) - **Recommended**
-  - RSA-PKCS#1 v1.5 - **Deprecated** (NIST recommends OAEP)
+  - RSA-OAEP (with SHA-256) - **Recommended** (NIST SP 800-56B Rev. 2)
+  - RSA-PKCS#1 v1.5 - **Deprecated** (NIST SP 800-56B Rev. 2 deprecates this for encryption)
 - **Signing/Verification**:
-  - RSA-PSS (with SHA-256) - **Recommended**
-  - RSA-PKCS#1 v1.5 (with SHA-256)
+  - RSA-PSS (with SHA-256) - **Recommended** (NIST SP 800-57 Part 1 Rev. 5)
+  - RSA-PKCS#1 v1.5 (with SHA-256) - Acceptable (NIST SP 800-131A Rev. 2)
 - **Key Management**: Import and export keys in PEM format.
+- **Error Handling**: Uses sentinel errors for robust error checking.
 
 ## NIST Compliance
 
 This library enforces NIST recommendations:
 
-- **Minimum Key Size**: 2048 bits. Key generation will fail for smaller sizes.
+- **Minimum Key Size**: 2048 bits (NIST SP 800-57 Part 1 Rev. 5). Key generation will fail for smaller sizes.
 - **Hash Function**: SHA-256 is used for OAEP and PSS.
-- **Encryption**: RSA-OAEP is the recommended scheme. PKCS#1 v1.5 is marked as deprecated.
+- **Encryption**: RSA-OAEP is recommended (NIST SP 800-56B Rev. 2). PKCS#1 v1.5 encryption is marked as deprecated.
+- **Signatures**: RSA-PSS is recommended (NIST SP 800-57 Part 1 Rev. 5).
 
 ## Installation
 
@@ -161,6 +163,34 @@ if err != nil {
     log.Fatal(err)
 }
 ```
+
+## Error Handling
+
+This library uses sentinel errors for robust error checking. You can check for specific errors using `errors.Is`:
+
+```go
+import (
+	"errors"
+	"log"
+
+	gorsa "github.com/fawwazid/go-rsa"
+)
+
+func main() {
+	// ...
+	_, _, err := gorsa.GenerateKeys(1024)
+	if errors.Is(err, gorsa.ErrKeySizeTooSmall) {
+		log.Println("Key size is too small! Must be at least 2048 bits.")
+	}
+}
+```
+
+Available errors:
+- `ErrNilPrivateKey`: Returned when a private key is expected but nil is provided.
+- `ErrNilPublicKey`: Returned when a public key is expected but nil is provided.
+- `ErrKeySizeTooSmall`: Returned when the requested key size is too small (less than 2048 bits).
+- `ErrInvalidPEM`: Returned when the PEM block cannot be parsed.
+- `ErrNotRSAKey`: Returned when the key type is not RSA.
 
 ## License
 
