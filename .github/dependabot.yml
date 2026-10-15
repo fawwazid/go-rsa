@@ -8,15 +8,23 @@ updates:
       time: "09:00"
       timezone: "Asia/Jakarta"
     open-pull-requests-limit: 5
-    rebase-strategy: "auto"
-    labels:
-      - "dependencies"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
     groups:
-      go-minor-and-patch:
-        applies-to: "version-updates"
+      go-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Jakarta"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
         patterns:
           - "*"
         update-types:
