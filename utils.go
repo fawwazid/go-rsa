@@ -23,14 +23,34 @@ func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	return priv, &priv.PublicKey, nil
 }
 
+func validatePublicKey(pub *rsa.PublicKey) error {
+	if pub == nil {
+		return ErrNilPublicKey
+	}
+	if pub.N == nil || pub.N.BitLen() < 2048 {
+		return ErrKeySizeTooSmall
+	}
+	return nil
+}
+
+func validatePrivateKey(priv *rsa.PrivateKey) error {
+	if priv == nil {
+		return ErrNilPrivateKey
+	}
+	if priv.N == nil || priv.N.BitLen() < 2048 {
+		return ErrKeySizeTooSmall
+	}
+	return nil
+}
+
 // PrivateKeyToPEM converts an RSA private key to PEM format.
 //
 // It marshals the private key to PKCS#1 ASN.1 DER syntax and encodes it to a PEM block.
 //
-// Returns the PEM-encoded private key as a byte slice, or an error if the key is nil.
+// Returns the PEM-encoded private key as a byte slice, or an error if the key is nil or too small.
 func PrivateKeyToPEM(priv *rsa.PrivateKey) ([]byte, error) {
-	if priv == nil {
-		return nil, ErrNilPrivateKey
+	if err := validatePrivateKey(priv); err != nil {
+		return nil, err
 	}
 	privBytes := x509.MarshalPKCS1PrivateKey(priv)
 	privPEM := pem.EncodeToMemory(
@@ -46,10 +66,10 @@ func PrivateKeyToPEM(priv *rsa.PrivateKey) ([]byte, error) {
 //
 // It marshals the public key to PKIX ASN.1 DER syntax and encodes it to a PEM block.
 //
-// Returns the PEM-encoded public key as a byte slice, or an error if the key is nil or marshaling fails.
+// Returns the PEM-encoded public key as a byte slice, or an error if the key is nil, too small, or marshaling fails.
 func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
-	if pub == nil {
-		return nil, ErrNilPublicKey
+	if err := validatePublicKey(pub); err != nil {
+		return nil, err
 	}
 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
@@ -69,7 +89,7 @@ func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 // It decodes the PEM block and parses the PKCS#1 private key.
 // Note: Only the first PEM block is parsed; any additional blocks or trailing data are ignored.
 //
-// Returns the parsed private key or an error if parsing fails.
+// Returns the parsed private key or an error if parsing fails or the key is smaller than 2048 bits.
 func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
@@ -81,6 +101,10 @@ func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
+	if err := validatePrivateKey(priv); err != nil {
+		return nil, err
+	}
+
 	return priv, nil
 }
 
@@ -89,7 +113,8 @@ func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 // It decodes the PEM block and parses the PKIX public key.
 // Note: Only the first PEM block is parsed; any additional blocks or trailing data are ignored.
 //
-// Returns the parsed public key or an error if parsing fails or the key is not an RSA key.
+// Returns the parsed public key or an error if parsing fails, the key is not an RSA key,
+// or the key is smaller than 2048 bits.
 func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
@@ -103,6 +128,9 @@ func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 
 	switch pub := pub.(type) {
 	case *rsa.PublicKey:
+		if err := validatePublicKey(pub); err != nil {
+			return nil, err
+		}
 		return pub, nil
 	default:
 		return nil, ErrNotRSAKey

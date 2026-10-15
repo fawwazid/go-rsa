@@ -21,7 +21,7 @@ A simple and secure Go library for RSA encryption, decryption, signing, and veri
 
 This library enforces NIST recommendations:
 
-- **Minimum Key Size**: 2048 bits (NIST SP 800-57 Part 1 Rev. 5). Key generation will fail for smaller sizes.
+- **Minimum Key Size**: 2048 bits (NIST SP 800-57 Part 1 Rev. 5). Key generation, import, export, and cryptographic operations reject smaller keys.
 - **Hash Function**: SHA-256 is used for OAEP and PSS.
 - **Encryption**: RSA-OAEP is recommended (NIST SP 800-56B Rev. 2). PKCS#1 v1.5 encryption is marked as deprecated.
 - **Signatures**: RSA-PSS is recommended (NIST SP 800-57 Part 1 Rev. 5).
@@ -188,7 +188,7 @@ func main() {
 Available errors:
 - `ErrNilPrivateKey`: Returned when a private key is expected but nil is provided.
 - `ErrNilPublicKey`: Returned when a public key is expected but nil is provided.
-- `ErrKeySizeTooSmall`: Returned when the requested key size is too small (less than 2048 bits).
+- `ErrKeySizeTooSmall`: Returned when an RSA key is too small (less than 2048 bits).
 - `ErrInvalidPEM`: Returned when the PEM block cannot be parsed.
 - `ErrNotRSAKey`: Returned when the key type is not RSA.
 

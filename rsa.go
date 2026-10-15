@@ -18,8 +18,8 @@ import (
 //
 // Returns the encrypted ciphertext or an error if encryption fails.
 func EncryptOAEP(pub *rsa.PublicKey, msg []byte, label []byte) ([]byte, error) {
-	if pub == nil {
-		return nil, ErrNilPublicKey
+	if err := validatePublicKey(pub); err != nil {
+		return nil, err
 	}
 	return rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, msg, label)
 }
@@ -33,8 +33,8 @@ func EncryptOAEP(pub *rsa.PublicKey, msg []byte, label []byte) ([]byte, error) {
 //
 // Returns the decrypted plaintext or an error if decryption fails.
 func DecryptOAEP(priv *rsa.PrivateKey, ciphertext []byte, label []byte) ([]byte, error) {
-	if priv == nil {
-		return nil, ErrNilPrivateKey
+	if err := validatePrivateKey(priv); err != nil {
+		return nil, err
 	}
 	return rsa.DecryptOAEP(sha256.New(), rand.Reader, priv, ciphertext, label)
 }
@@ -48,8 +48,8 @@ func DecryptOAEP(priv *rsa.PrivateKey, ciphertext []byte, label []byte) ([]byte,
 //
 // Returns the encrypted ciphertext or an error if encryption fails.
 func EncryptPKCS1v15(pub *rsa.PublicKey, msg []byte) ([]byte, error) {
-	if pub == nil {
-		return nil, ErrNilPublicKey
+	if err := validatePublicKey(pub); err != nil {
+		return nil, err
 	}
 	return rsa.EncryptPKCS1v15(rand.Reader, pub, msg)
 }
@@ -63,8 +63,8 @@ func EncryptPKCS1v15(pub *rsa.PublicKey, msg []byte) ([]byte, error) {
 //
 // Returns the decrypted plaintext or an error if decryption fails.
 func DecryptPKCS1v15(priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
-	if priv == nil {
-		return nil, ErrNilPrivateKey
+	if err := validatePrivateKey(priv); err != nil {
+		return nil, err
 	}
 	return rsa.DecryptPKCS1v15(rand.Reader, priv, ciphertext)
 }
@@ -78,8 +78,8 @@ func DecryptPKCS1v15(priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
 //
 // Returns the signature or an error if signing fails.
 func SignPSS(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
-	if priv == nil {
-		return nil, ErrNilPrivateKey
+	if err := validatePrivateKey(priv); err != nil {
+		return nil, err
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.SignPSS(rand.Reader, priv, crypto.SHA256, hashed[:], nil)
@@ -94,8 +94,8 @@ func SignPSS(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
 //
 // Returns nil if the signature is valid, or an error otherwise.
 func VerifyPSS(pub *rsa.PublicKey, msg, signature []byte) error {
-	if pub == nil {
-		return ErrNilPublicKey
+	if err := validatePublicKey(pub); err != nil {
+		return err
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.VerifyPSS(pub, crypto.SHA256, hashed[:], signature, nil)
@@ -109,8 +109,8 @@ func VerifyPSS(pub *rsa.PublicKey, msg, signature []byte) error {
 //
 // Returns the signature or an error if signing fails.
 func SignPKCS1v15(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
-	if priv == nil {
-		return nil, ErrNilPrivateKey
+	if err := validatePrivateKey(priv); err != nil {
+		return nil, err
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA256, hashed[:])
@@ -125,8 +125,8 @@ func SignPKCS1v15(priv *rsa.PrivateKey, msg []byte) ([]byte, error) {
 //
 // Returns nil if the signature is valid, or an error otherwise.
 func VerifyPKCS1v15(pub *rsa.PublicKey, msg, signature []byte) error {
-	if pub == nil {
-		return ErrNilPublicKey
+	if err := validatePublicKey(pub); err != nil {
+		return err
 	}
 	hashed := sha256.Sum256(msg)
 	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], signature)

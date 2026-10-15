@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -106,6 +107,65 @@ func TestGenerateKeysValidation(t *testing.T) {
 	_, _, err = gorsa.GenerateKeys(2048)
 	if err != nil {
 		t.Errorf("Expected no error for key size 2048, got %v", err)
+	}
+}
+
+func TestRejectsWeakKeys(t *testing.T) {
+	weakPriv, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		t.Fatalf("Failed to generate weak test key: %v", err)
+	}
+	weakPub := &weakPriv.PublicKey
+	msg := []byte("Hello, RSA!")
+
+	privateOperations := []struct {
+		name string
+		call func() error
+	}{
+		{"DecryptOAEP", func() error { _, err := gorsa.DecryptOAEP(weakPriv, nil, nil); return err }},
+		{"DecryptPKCS1v15", func() error { _, err := gorsa.DecryptPKCS1v15(weakPriv, nil); return err }},
+		{"SignPSS", func() error { _, err := gorsa.SignPSS(weakPriv, msg); return err }},
+		{"SignPKCS1v15", func() error { _, err := gorsa.SignPKCS1v15(weakPriv, msg); return err }},
+		{"PrivateKeyToPEM", func() error { _, err := gorsa.PrivateKeyToPEM(weakPriv); return err }},
+	}
+	for _, test := range privateOperations {
+		t.Run(test.name, func(t *testing.T) {
+			if err := test.call(); !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
+				t.Fatalf("expected ErrKeySizeTooSmall, got %v", err)
+			}
+		})
+	}
+
+	publicOperations := []struct {
+		name string
+		call func() error
+	}{
+		{"EncryptOAEP", func() error { _, err := gorsa.EncryptOAEP(weakPub, msg, nil); return err }},
+		{"EncryptPKCS1v15", func() error { _, err := gorsa.EncryptPKCS1v15(weakPub, msg); return err }},
+		{"VerifyPSS", func() error { return gorsa.VerifyPSS(weakPub, msg, nil) }},
+		{"VerifyPKCS1v15", func() error { return gorsa.VerifyPKCS1v15(weakPub, msg, nil) }},
+		{"PublicKeyToPEM", func() error { _, err := gorsa.PublicKeyToPEM(weakPub); return err }},
+	}
+	for _, test := range publicOperations {
+		t.Run(test.name, func(t *testing.T) {
+			if err := test.call(); !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
+				t.Fatalf("expected ErrKeySizeTooSmall, got %v", err)
+			}
+		})
+	}
+
+	weakPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(weakPriv)})
+	if _, err := gorsa.ParsePrivateKeyFromPEM(weakPrivPEM); !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
+		t.Fatalf("ParsePrivateKeyFromPEM: expected ErrKeySizeTooSmall, got %v", err)
+	}
+
+	weakPubDER, err := x509.MarshalPKIXPublicKey(weakPub)
+	if err != nil {
+		t.Fatalf("Failed to marshal weak public key: %v", err)
+	}
+	weakPubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: weakPubDER})
+	if _, err := gorsa.ParsePublicKeyFromPEM(weakPubPEM); !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
+		t.Fatalf("ParsePublicKeyFromPEM: expected ErrKeySizeTooSmall, got %v", err)
 	}
 }
 
