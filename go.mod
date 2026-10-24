@@ -1,3 +1,3 @@
-module github.com/fawwazid/go-rsa
+module github.com/fawwazid/go-rsa/v2
 
-go 1.27.2
+go 1.27.3
