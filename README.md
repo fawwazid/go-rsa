@@ -1,196 +1,55 @@
-# Go RSA Library
+# go-rsa
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/fawwazid/go-rsa.svg)](https://pkg.go.dev/github.com/fawwazid/go-rsa)
+Install: `go get github.com/fawwazid/go-rsa/v2@v2.0.0`.
+See [v2 release notes](CHANGELOG.md) for breaking changes.
 
-A simple and secure Go library for RSA encryption, decryption, signing, and verification. This library supports OAEP, PSS, and PKCS#1 v1.5 schemes and enforces NIST standards for key sizes.
-
-## Features
-
-- **Key Generation**: Generates RSA key pairs with a minimum size of 2048 bits (NIST standard).
-- **Encryption/Decryption**:
-  - RSA-OAEP (with SHA-256) - **Recommended** (NIST SP 800-56B Rev. 2)
-  - RSA-PKCS#1 v1.5 - **Deprecated** (NIST SP 800-56B Rev. 2 deprecates this for encryption)
-- **Signing/Verification**:
-  - RSA-PSS (with SHA-256) - **Recommended** (NIST SP 800-57 Part 1 Rev. 5)
-  - RSA-PKCS#1 v1.5 (with SHA-256) - Acceptable (NIST SP 800-131A Rev. 2)
-- **Key Management**: Import and export keys in PEM format.
-- **Error Handling**: Uses sentinel errors for robust error checking.
-
-## NIST Compliance
-
-This library enforces NIST recommendations:
-
-- **Minimum Key Size**: 2048 bits (NIST SP 800-57 Part 1 Rev. 5). Key generation, import, export, and cryptographic operations reject smaller keys.
-- **Hash Function**: SHA-256 is used for OAEP and PSS.
-- **Encryption**: RSA-OAEP is recommended (NIST SP 800-56B Rev. 2). PKCS#1 v1.5 encryption is marked as deprecated.
-- **Signatures**: RSA-PSS is recommended (NIST SP 800-57 Part 1 Rev. 5).
-
-## Installation
-
-```bash
-go get github.com/fawwazid/go-rsa
-```
+RSA-OAEP encryption and RSA-PSS signatures with SHA-256. Requires Go 1.27.3.
 
 ## Usage
 
-### Import the package
-
 ```go
+package main
+
 import (
-	"fmt"
-	"log"
-
-	gorsa "github.com/fawwazid/go-rsa"
-)
-```
-
-### 1. Generate Keys
-
-```go
-// Generate a new RSA key pair (minimum 2048 bits)
-priv, pub, err := gorsa.GenerateKeys(2048)
-if err != nil {
-    log.Fatalf("Failed to generate keys: %v", err)
-}
-```
-
-### 2. Encryption and Decryption (OAEP)
-
-Recommended for new applications.
-
-```go
-msg := []byte("Secret Message")
-label := []byte("optional-label")
-
-// Encrypt
-ciphertext, err := gorsa.EncryptOAEP(pub, msg, label)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Decrypt
-plaintext, err := gorsa.DecryptOAEP(priv, ciphertext, label)
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Printf("Decrypted: %s\n", plaintext)
-```
-
-### 3. Encryption and Decryption (PKCS#1 v1.5) [Deprecated]
-
-Supported for legacy compatibility only. NIST recommends using OAEP.
-
-```go
-msg := []byte("Secret Message")
-
-// Encrypt
-ciphertext, err := gorsa.EncryptPKCS1v15(pub, msg)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Decrypt
-plaintext, err := gorsa.DecryptPKCS1v15(priv, ciphertext)
-if err != nil {
-    log.Fatal(err)
-}
-```
-
-### 4. Signing and Verification (PSS)
-
-Recommended for new applications.
-
-```go
-// Sign
-signature, err := gorsa.SignPSS(priv, msg)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Verify
-err = gorsa.VerifyPSS(pub, msg, signature)
-if err != nil {
-    log.Fatal("Verification failed")
-}
-fmt.Println("Signature verified!")
-```
-
-### 5. Signing and Verification (PKCS#1 v1.5)
-
-Supported for legacy compatibility.
-
-```go
-msg := []byte("Secret Message")
-
-// Sign
-signature, err := gorsa.SignPKCS1v15(priv, msg)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Verify
-err = gorsa.VerifyPKCS1v15(pub, msg, signature)
-if err != nil {
-    log.Fatal("Verification failed")
-}
-```
-
-### 6. Export and Import Keys (PEM)
-
-```go
-// Export to PEM
-privPEM, err := gorsa.PrivateKeyToPEM(priv)
-if err != nil {
-    log.Fatal(err)
-}
-pubPEM, err := gorsa.PublicKeyToPEM(pub)
-if err != nil {
-    log.Fatal(err)
-}
-
-fmt.Printf("Private Key:\n%s\n", privPEM)
-fmt.Printf("Public Key:\n%s\n", pubPEM)
-
-// Import from PEM
-parsedPriv, err := gorsa.ParsePrivateKeyFromPEM(privPEM)
-if err != nil {
-    log.Fatal(err)
-}
-
-parsedPub, err := gorsa.ParsePublicKeyFromPEM(pubPEM)
-if err != nil {
-    log.Fatal(err)
-}
-```
-
-## Error Handling
-
-This library uses sentinel errors for robust error checking. You can check for specific errors using `errors.Is`:
-
-```go
-import (
-	"errors"
-	"log"
-
-	gorsa "github.com/fawwazid/go-rsa"
+ "fmt"
+ "log"
+ gorsa "github.com/fawwazid/go-rsa/v2"
 )
 
 func main() {
-	// ...
-	_, _, err := gorsa.GenerateKeys(1024)
-	if errors.Is(err, gorsa.ErrKeySizeTooSmall) {
-		log.Println("Key size is too small! Must be at least 2048 bits.")
-	}
+ privateKey, publicKey, err := gorsa.GenerateKeys(3072)
+ if err != nil { log.Fatal(err) }
+ message := []byte("short message")
+ signature, err := gorsa.SignPSS(privateKey, message)
+ if err != nil { log.Fatal(err) }
+ if err := gorsa.VerifyPSS(publicKey, message, signature); err != nil { log.Fatal(err) }
+ encoded, err := gorsa.PrivateKeyToPEM(privateKey)
+ if err != nil { log.Fatal(err) }
+ fmt.Println(len(encoded))
 }
 ```
 
-Available errors:
-- `ErrNilPrivateKey`: Returned when a private key is expected but nil is provided.
-- `ErrNilPublicKey`: Returned when a public key is expected but nil is provided.
-- `ErrKeySizeTooSmall`: Returned when an RSA key is too small (less than 2048 bits).
-- `ErrInvalidPEM`: Returned when the PEM block cannot be parsed.
-- `ErrNotRSAKey`: Returned when the key type is not RSA.
+## API and key formats
 
-## License
+- `GenerateKeys(bits)`: minimum 2048 bits; choose 3072 where 128-bit security
+  strength is required.
+- `EncryptOAEP` / `DecryptOAEP`: SHA-256, with the same optional label.
+  Use authenticated symmetric encryption for bulk data.
+- `SignPSS` / `VerifyPSS`: SHA-256 and exactly 32 salt bytes in every mode.
+- `PrivateKeyToPEM` / `ParsePrivateKeyFromPEM`: PKCS#8 `PRIVATE KEY`.
+- `PublicKeyToPEM` / `ParsePublicKeyFromPEM`: PKIX `PUBLIC KEY`.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Keys require two primes and valid private-key structure. PEM imports require
+the correct single block, no PEM headers, and no trailing payload.
+Private-key export is **unencrypted**; protect it through application storage.
+
+## Breaking changes
+
+PKCS#1 v1.5 encryption, decryption, signing, and verification APIs have been
+removed. PKCS#1 `RSA PRIVATE KEY` input is rejected; only PKCS#8 is supported.
+PSS verification no longer auto-detects arbitrary salt lengths.
+No aliases, automatic format conversion, or alternate verification path remain.
+
+See [SECURITY.md](SECURITY.md) for FIPS requirements. OAEP alone is not a
+complete SP 800-56B key-establishment protocol.
+Run `go test ./...` and `go vet ./...`. License: [MIT](LICENSE).

@@ -3,6 +3,8 @@ package gorsa
 import "errors"
 
 var (
+	// ErrInvalidKey is returned for structurally invalid RSA keys.
+	ErrInvalidKey = errors.New("invalid RSA key")
 	// ErrNilPrivateKey is returned when a private key is expected but nil is provided.
 	ErrNilPrivateKey = errors.New("private key cannot be nil")
 
