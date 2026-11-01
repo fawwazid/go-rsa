@@ -14,6 +14,9 @@ func EncryptOAEP(pub *rsa.PublicKey, msg, label []byte) ([]byte, error) {
 	if err := validatePublicKey(pub); err != nil {
 		return nil, err
 	}
+	if len(msg) > pub.Size()-2*sha256.Size-2 {
+		return nil, ErrMessageTooLong
+	}
 	return rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, msg, label)
 }
 
@@ -21,6 +24,9 @@ func EncryptOAEP(pub *rsa.PublicKey, msg, label []byte) ([]byte, error) {
 func DecryptOAEP(priv *rsa.PrivateKey, ciphertext, label []byte) ([]byte, error) {
 	if err := validatePrivateKey(priv); err != nil {
 		return nil, err
+	}
+	if len(ciphertext) != priv.Size() {
+		return nil, ErrInvalidCiphertext
 	}
 	return rsa.DecryptOAEP(sha256.New(), rand.Reader, priv, ciphertext, label)
 }
