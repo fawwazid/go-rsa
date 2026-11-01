@@ -25,3 +25,15 @@ Keep SHA-256 OAEP/PSS with strict signatures and modern PEM keys.
 ```sh
 go get github.com/fawwazid/go-rsa/v2@v2.0.0
 ```
+
+## v1.0.2 — 2026-10-15
+
+- Harden RSA key validation and update dependencies.
+
+## v1.0.1 — 2025-12-30
+
+- Add sentinel errors and improve NIST compliance documentation.
+
+## v1.0.0 — 2025-11-30
+
+- Initial release with RSA OAEP, PSS, and PKCS#1 v1.5 support.
