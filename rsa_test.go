@@ -130,6 +130,9 @@ func TestKeyValidation(t *testing.T) {
 	if _, _, err := gorsa.GenerateKeys(1024); !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
 		t.Fatal(err)
 	}
+	if _, _, err := gorsa.GenerateKeys(gorsa.MaxKeySize + 1); !errors.Is(err, gorsa.ErrKeySizeTooLarge) {
+		t.Fatal(err)
+	}
 	for _, call := range []func() error{
 		func() error { _, err := gorsa.EncryptOAEP(nil, nil, nil); return err },
 		func() error { _, err := gorsa.DecryptOAEP(nil, nil, nil); return err },
@@ -151,5 +154,28 @@ func TestKeyValidation(t *testing.T) {
 	}
 	if _, err := gorsa.SignPSS(weak, nil); !errors.Is(err, gorsa.ErrKeySizeTooSmall) {
 		t.Fatal(err)
+	}
+}
+
+func TestOAEPMessageAndCiphertextBounds(t *testing.T) {
+	priv, pub, err := gorsa.GenerateKeys(2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	maxMessageLength := pub.Size() - 2*sha256.Size - 2
+	message := bytes.Repeat([]byte{'x'}, maxMessageLength)
+	ciphertext, err := gorsa.EncryptOAEP(pub, message, nil)
+	if err != nil {
+		t.Fatalf("EncryptOAEP() rejected maximum message: %v", err)
+	}
+	plaintext, err := gorsa.DecryptOAEP(priv, ciphertext, nil)
+	if err != nil || !bytes.Equal(plaintext, message) {
+		t.Fatalf("maximum message round trip = %v", err)
+	}
+	if _, err := gorsa.EncryptOAEP(pub, append(message, 'x'), nil); !errors.Is(err, gorsa.ErrMessageTooLong) {
+		t.Fatalf("EncryptOAEP() error = %v, want ErrMessageTooLong", err)
+	}
+	if _, err := gorsa.DecryptOAEP(priv, ciphertext[:len(ciphertext)-1], nil); !errors.Is(err, gorsa.ErrInvalidCiphertext) {
+		t.Fatalf("DecryptOAEP() error = %v, want ErrInvalidCiphertext", err)
 	}
 }

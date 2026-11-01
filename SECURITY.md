@@ -3,20 +3,19 @@
 ## Current contract
 
 RSA-OAEP and RSA-PSS use SHA-256. PSS salt length is exactly 32 bytes for
-both signing and verification in every runtime mode. Keys require at least
-2048 bits and two primes; choose 3072 bits where 128-bit security strength is
+both signing and verification in every runtime mode. Keys require 2048–8192
+bits and two primes; choose 3072 bits where 128-bit security strength is
 required. Private-key serialization is unencrypted PKCS#8 PRIVATE KEY; public
-keys use PKIX PUBLIC KEY. Other PEM types, PEM headers, and trailing payloads
-are rejected. Protect exported private keys in application storage.
+keys use PKIX PUBLIC KEY. PEM imports are capped at 1 MiB, reject preambles,
+other PEM types, PEM headers, and trailing payloads. Protect exported private
+keys in application storage.
 
 PKCS#1 v1.5 operation wrappers, PKCS#1 private-key input, and PSS salt
 auto-detection are absent. OAEP alone is not a complete SP 800-56B
 key-establishment protocol.
 
-This release removes source and behavior compatibility with the APIs listed
-under Breaking changes in README.md. Unsupported inputs are rejected.
-Applications must replace unsupported records or enrollments before upgrading;
-this library does not provide conversion or permissive verification helpers.
+Review the Breaking changes section in README.md before upgrading. Removed APIs
+and unsupported inputs have no compatibility fallback or conversion helper.
 
 ## FIPS deployment
 
@@ -27,7 +26,7 @@ for its caller.
 
 The baseline is Go 1.27.3. The frozen Go module v1.0.0 corresponds to
 [CMVP certificate 5247](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5247),
-checked active on 2026-10-24. Review certificate status and operating-environment
+checked active on 2026-11-01. Review certificate status and operating-environment
 coverage before deployment. A consuming application can build with
 GOFIPS140=v1.0.0 and must not override it with fips140=off.
 The strict only setting below is an assessment aid, not a production setting.
@@ -55,9 +54,8 @@ In PowerShell, set the variables with
 `'fips140=only'`, then run the go test command. Restore the original environment
 after checking.
 
-CI is configured for Windows and Linux, including Linux race detection.
-Local validation is limited to the platform and commands actually executed;
-see the workspace SECURITY_REVIEW.md for the recorded results.
+Run these checks on the target operating systems and Go version used for
+deployment, and record the environment and results in your project review.
 
 ## References
 

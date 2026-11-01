@@ -10,10 +10,20 @@ import (
 	"fmt"
 )
 
-// GenerateKeys generates an RSA key pair of at least 2048 bits.
+const (
+	// MaxKeySize bounds RSA key generation and imported RSA key operations.
+	MaxKeySize = 8192
+	// MaxPEMSize bounds key parsing work and allocation.
+	MaxPEMSize = 1 << 20
+)
+
+// GenerateKeys generates an RSA key pair from 2048 through 8192 bits.
 func GenerateKeys(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	if bits < 2048 {
 		return nil, nil, ErrKeySizeTooSmall
+	}
+	if bits > MaxKeySize {
+		return nil, nil, ErrKeySizeTooLarge
 	}
 	if fips140.Enabled() && bits%2 != 0 {
 		return nil, nil, ErrInvalidKey
@@ -31,6 +41,9 @@ func validatePublicKey(pub *rsa.PublicKey) error {
 	}
 	if pub.N == nil || pub.N.BitLen() < 2048 {
 		return ErrKeySizeTooSmall
+	}
+	if pub.N.BitLen() > MaxKeySize {
+		return ErrKeySizeTooLarge
 	}
 	if pub.N.Sign() <= 0 || pub.N.Bit(0) == 0 || pub.E < 3 || pub.E%2 == 0 || pub.E > 1<<31-1 {
 		return ErrInvalidKey
@@ -104,8 +117,8 @@ func PublicKeyToPEM(pub *rsa.PublicKey) ([]byte, error) {
 // ParsePrivateKeyFromPEM parses and validates a single PKCS#8 PRIVATE KEY block.
 // PEM headers and trailing payloads are rejected.
 func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
-	block, rest := pem.Decode(pemBytes)
-	if block == nil || block.Type != "PRIVATE KEY" || len(block.Headers) != 0 || len(bytes.TrimSpace(rest)) != 0 {
+	block, err := decodeSinglePEM(pemBytes, "PRIVATE KEY")
+	if err != nil {
 		return nil, ErrInvalidPEM
 	}
 
@@ -128,8 +141,8 @@ func ParsePrivateKeyFromPEM(pemBytes []byte) (*rsa.PrivateKey, error) {
 // ParsePublicKeyFromPEM parses and validates a single PKIX PUBLIC KEY block.
 // PEM headers and trailing payloads are rejected.
 func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
-	block, rest := pem.Decode(pemBytes)
-	if block == nil || block.Type != "PUBLIC KEY" || len(block.Headers) != 0 || len(bytes.TrimSpace(rest)) != 0 {
+	block, err := decodeSinglePEM(pemBytes, "PUBLIC KEY")
+	if err != nil {
 		return nil, ErrInvalidPEM
 	}
 
@@ -147,4 +160,19 @@ func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 	default:
 		return nil, ErrNotRSAKey
 	}
+}
+
+func decodeSinglePEM(pemBytes []byte, blockType string) (*pem.Block, error) {
+	if len(pemBytes) > MaxPEMSize {
+		return nil, ErrInvalidPEM
+	}
+	data := bytes.TrimSpace(pemBytes)
+	if !bytes.HasPrefix(data, []byte("-----BEGIN ")) {
+		return nil, ErrInvalidPEM
+	}
+	block, rest := pem.Decode(data)
+	if block == nil || block.Type != blockType || len(block.Headers) != 0 || len(bytes.TrimSpace(rest)) != 0 {
+		return nil, ErrInvalidPEM
+	}
+	return block, nil
 }

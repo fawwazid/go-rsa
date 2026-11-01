@@ -33,6 +33,23 @@ func TestMalformedPrivateKeyDoesNotPanic(t *testing.T) {
 	}
 }
 
+func TestPEMParserRejectsPreambleAndOversizedInput(t *testing.T) {
+	priv, _, err := GenerateKeys(2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := PrivateKeyToPEM(priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParsePrivateKeyFromPEM(append([]byte("preamble\n"), encoded...)); !errors.Is(err, ErrInvalidPEM) {
+		t.Fatalf("preamble error = %v, want ErrInvalidPEM", err)
+	}
+	if _, err := ParsePrivateKeyFromPEM(make([]byte, MaxPEMSize+1)); !errors.Is(err, ErrInvalidPEM) {
+		t.Fatalf("oversized input error = %v, want ErrInvalidPEM", err)
+	}
+}
+
 func TestFIPSPolicy(t *testing.T) {
 	if !fips140.Enabled() {
 		t.Skip("requires FIPS mode")

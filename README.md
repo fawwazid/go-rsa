@@ -31,16 +31,17 @@ func main() {
 
 ## API and key formats
 
-- `GenerateKeys(bits)`: minimum 2048 bits; choose 3072 where 128-bit security
-  strength is required.
+- `GenerateKeys(bits)`: 2048–8192 bits; choose 3072 where 128-bit security
+  strength is required. The upper bound limits resource consumption.
 - `EncryptOAEP` / `DecryptOAEP`: SHA-256, with the same optional label.
   Use authenticated symmetric encryption for bulk data.
 - `SignPSS` / `VerifyPSS`: SHA-256 and exactly 32 salt bytes in every mode.
 - `PrivateKeyToPEM` / `ParsePrivateKeyFromPEM`: PKCS#8 `PRIVATE KEY`.
 - `PublicKeyToPEM` / `ParsePublicKeyFromPEM`: PKIX `PUBLIC KEY`.
 
-Keys require two primes and valid private-key structure. PEM imports require
-the correct single block, no PEM headers, and no trailing payload.
+Keys require two primes and valid private-key structure. PEM imports are capped
+at 1 MiB and require one correctly typed block, no preamble, no PEM headers,
+and no trailing payload.
 Private-key export is **unencrypted**; protect it through application storage.
 
 ## Breaking changes
