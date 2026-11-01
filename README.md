@@ -44,6 +44,23 @@ at 1 MiB and require one correctly typed block, no preamble, no PEM headers,
 and no trailing payload.
 Private-key export is **unencrypted**; protect it through application storage.
 
+## Semantic versioning
+
+Releases use Semantic Versioning through Release Please. A push to `main`
+opens or updates a release pull request. Merging that generated pull request
+creates the version tag and GitHub release.
+
+Use Conventional Commits in pull request titles (the squash-merge message):
+
+- `fix: ...`, including `fix(security): ...`, creates a patch release.
+- `feat: ...` creates a minor release.
+- `fix!: ...`, `feat!: ...`, or a `BREAKING CHANGE:` footer creates a
+  major release.
+- `docs:`, `test:`, `chore:`, and `ci:` do not trigger a release.
+
+A `security:` commit appears under Security in generated release notes, but
+does not trigger a version bump by itself. Do not edit the generated changelog
+manually.
 ## Breaking changes
 
 PKCS#1 v1.5 encryption, decryption, signing, and verification APIs have been
