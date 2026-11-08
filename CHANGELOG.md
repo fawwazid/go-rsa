@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/fawwazid/go-rsa/compare/v2.0.1...v2.0.2) (2026-11-08)
+
+
+### Documentation
+
+* document branch and pull request workflow ([32add48](https://github.com/fawwazid/go-rsa/commit/32add48366dc56e270f5bd0957adfdb643f428c6))
+
 ## [2.0.1](https://github.com/fawwazid/go-rsa/compare/v2.0.0...v2.0.1) (2026-11-01)
 
 
