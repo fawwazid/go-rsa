@@ -3,7 +3,7 @@
 Install: `go get github.com/fawwazid/go-rsa/v2@v2.0.0`.
 See [v2 release notes](CHANGELOG.md) for breaking changes.
 
-RSA-OAEP encryption and RSA-PSS signatures with SHA-256. Requires Go 1.27.3.
+RSA-OAEP encryption and RSA-PSS signatures with SHA-256. Requires Go 1.27.4.
 
 ## Usage
 
