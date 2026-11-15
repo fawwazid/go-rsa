@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/fawwazid/go-rsa/compare/v2.0.2...v2.0.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* **security:** require patched Go toolchain ([#17](https://github.com/fawwazid/go-rsa/issues/17)) ([#18](https://github.com/fawwazid/go-rsa/issues/18)) ([94791af](https://github.com/fawwazid/go-rsa/commit/94791af3e3eaf81ccdd8e2734992ea653a860db7))
+
 ## [2.0.2](https://github.com/fawwazid/go-rsa/compare/v2.0.1...v2.0.2) (2026-11-08)
 
 
